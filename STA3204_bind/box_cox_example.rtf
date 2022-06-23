@@ -1,0 +1,56 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1038\cocoasubrtf360
+{\fonttbl\f0\fswiss\fcharset0 ArialMT;}
+{\colortbl;\red255\green255\blue255;}
+\margl1440\margr1440\vieww9000\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\f0\fs24 \cf0   proc contents data = theta_MV;  /* lists variables in dataset theta_MV */\
+  run;\
+\
+  data temp;  /* create new dataset */\
+    set theta_MV;  /* set old dataset */\
+    TPC2mavgGcon = TPC2mavgG + 0.025;  /* raise all values by 0.025 */\
+    TPC2mavgNcon = TPC2mavgN + 0.025;\
+  run;\
+  \
+  data trans; /* create dataset with a 0-constant vector */\
+    set temp;\
+    z = 0;\
+  run;\
+\
+  /* run box-cox transform */\
+  proc transreg data = trans details maxiter=0 nozeroconstant;\
+    model BoxCox(TPC1mavgG / convenient alpha=0.05) = identity(z);\
+  run;\
+\
+ /* Look in the SAS: Results window for the Transreg object. The Log Likelihood Plots the likelihood that the data is normal by the transforms used (this isn\'92t really that helpful). The Details information will look like this:\
+\
+Dep       1    BoxCox(DPC1mavgN)    Lambda Used       0.5\
+                                                                  Lambda                  0.25\
+                                                                  Log Likelihood     181.5\
+                                                                  Conv. Lambda       0.5\
+                                                                  Conv. Lambda LL    179.9\
+                                                                  CI Limit           179.6\
+                                                                 Alpha              0.05\
+                                                                 Options            Convenient Lambda Used\
+\
+Ind       0    Identity(z)          Options            All Zero\
+\
+The Lambda Used is the convenient transform to use, while the Lamba is the best option (but may not be the most convenient). */\
+\
+data transform;\
+	set temp;\
+	DPC1mavgN = (((TPC1mavgG**.5)-1)/.5); /* this is the code to transform that variable based on the lambda). Replace .5 with whatever the lambda given is (or what you want to use). If lambda is 0, use log(DPC1mavgN) */\
+run;\
+\
+List of Lambdas and power to raise them by:\
+\uc0\u955  = \u8722 2      Y**-2 or 1/(Y**2)\
+\uc0\u955  = \u8722 1      Y**-1\
+\uc0\u955  = \u8722 0.5   Y**-0.5      (square root)\
+\uc0\u955  = \u8722 0.33 Y**-(1/3)   (cubed root)\
+\uc0\u955  = \u8722 0.25  Y**-0.25  (4th root)\
+\uc0\u955  =    0       log(Y)       (log)\
+\uc0\u955  =    0.25  Y**0.25\
+\uc0\u955  =    0.33 Y**(1/3)\
+\uc0\u955  =    0.5   Y**0.5\
+}
